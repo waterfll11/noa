@@ -1,1 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>TAKII'S JANKEN GAME</title>
+    <style>
+        :root {
+            --bg-color: #000;
+        }
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: #fff;
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.2s;
+        }
 
+        h1 {
+            font-size: 3rem;
+            text-shadow: 4px 4px #ff00ff;
+            margin-bottom: 10px;
+        }
+
+        .name-banner {
+            font-size: 1.5rem;
+            letter-spacing: 10px;
+            color: #0ff;
+            margin-bottom: 30px;
+        }
+
+        /* じゃんけんの手のエリア */
+        .choices {
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .btn {
+            font-size: 3rem;
+            padding: 20px;
+            cursor: pointer;
+            border: 5px solid #fff;
+            background: rgba(255, 255, 255, 0.1);
+            transition: transform 0.1s, background 0.3s;
+            border-radius: 15px;
+        }
+
+        .btn:hover {
+            transform: scale(1.2) rotate(5deg);
+            background: #ff00ff;
+        }
+
+        .btn:active {
+            transform: scale(0.9);
+        }
+
+        /* 結果表示 */
+        #result-display {
+            margin-top: 40px;
+            font-size: 2.5rem;
+            text-align: center;
+            min-height: 100px;
+        }
+
+        /* 背景の装飾 */
+        .random-shape {
+            position: absolute;
+            z-index: -1;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="name-banner">OWNER: takii</div>
+    <h1>JANKEN DEATHMATCH</h1>
+
+    <div class="choices">
+        <button class="btn" onclick="play('✊')">✊</button>
+        <button class="btn" onclick="play('✌️')">✌️</button>
+        <button class="btn" onclick="play('🖐️')">🖐️</button>
+    </div>
+
+    <div id="result-display">
+        <p>選んでください...</p>
+    </div>
+
+    <script>
+        const hands = ['✊', '✌️', '🖐️'];
+
+        function play(playerHand) {
+            const botHand = hands[Math.floor(Math.random() * hands.length)];
+            let result = "";
+
+            // 勝敗判定
+            if (playerHand === botHand) {
+                result = "DRAW (引き分け)";
+                triggerGlitch('#555');
+            } else if (
+                (playerHand === '✊' && botHand === '✌️') ||
+                (playerHand === '✌️' && botHand === '🖐️') ||
+                (playerHand === '🖐️' && botHand === '✊')
+            ) {
+                result = "YOU WIN!! (takiiが微笑んだ)";
+                triggerGlitch('#0f0');
+            } else {
+                result = "YOU LOSE... (takiiは悲しんだ)";
+                triggerGlitch('#f00');
+            }
+
+            document.getElementById('result-display').innerHTML = `
+                <div>自分: ${playerHand} vs 相手: ${botHand}</div>
+                <div style="font-size: 4rem; margin-top:10px;">${result}</div>
+            `;
+            
+            spawnTakii();
+        }
+
+        // 背景をフラッシュさせる
+        function triggerGlitch(color) {
+            document.body.style.backgroundColor = color;
+            setTimeout(() => {
+                document.body.style.backgroundColor = '#000';
+            }, 100);
+            
+            // ランダムな色に一瞬変える
+            const randomColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            document.querySelector('h1').style.color = randomColor;
+        }
+
+        // 画面のあちこちに "takii" を出現させる
+        function spawnTakii() {
+            const div = document.createElement('div');
+            div.className = 'random-shape';
+            div.innerText = 'takii';
+            div.style.left = Math.random() * 90 + 'vw';
+            div.style.top = Math.random() * 90 + 'vh';
+            div.style.fontSize = (Math.random() * 5 + 2) + 'rem';
+            div.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            div.style.transform = `rotate(${Math.random() * 360}deg)`;
+            
+            document.body.appendChild(div);
+            
+            // 2秒後に消す
+            setTimeout(() => div.remove(), 2000);
+        }
+    </script>
+</body>
+</html>
