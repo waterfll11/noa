@@ -2,155 +2,156 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>TAKII'S JANKEN GAME</title>
+    <title>QUEST OF TAKII</title>
     <style>
-        :root {
-            --bg-color: #000;
-        }
         body {
-            margin: 0;
-            background-color: var(--bg-color);
+            background-color: #000;
             color: #fff;
-            font-family: 'Arial Black', sans-serif;
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
+            margin: 0;
             overflow: hidden;
-            transition: background 0.2s;
+            border: 10px double #fff;
+            box-sizing: border-box;
         }
 
-        h1 {
-            font-size: 3rem;
-            text-shadow: 4px 4px #ff00ff;
-            margin-bottom: 10px;
-        }
-
-        .name-banner {
-            font-size: 1.5rem;
-            letter-spacing: 10px;
-            color: #0ff;
-            margin-bottom: 30px;
-        }
-
-        /* じゃんけんの手のエリア */
-        .choices {
-            display: flex;
-            gap: 20px;
-            z-index: 10;
-        }
-
-        .btn {
-            font-size: 3rem;
+        /* RPGメッセージウィンドウ風 */
+        .window {
+            border: 4px solid #fff;
             padding: 20px;
+            background: #000;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 0 0 4px #000, 0 0 0 8px #fff;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #0f0;
+        }
+
+        .message {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            height: 80px;
+        }
+
+        .commands {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cmd-btn {
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            font-size: 1.2rem;
             cursor: pointer;
-            border: 5px solid #fff;
-            background: rgba(255, 255, 255, 0.1);
-            transition: transform 0.1s, background 0.3s;
-            border-radius: 15px;
+            transition: 0.1s;
         }
 
-        .btn:hover {
-            transform: scale(1.2) rotate(5deg);
-            background: #ff00ff;
+        .cmd-btn:hover {
+            background: #fff;
+            color: #000;
         }
 
-        .btn:active {
-            transform: scale(0.9);
+        /* 敵（takii）の見た目 */
+        #enemy {
+            font-size: 5rem;
+            margin-bottom: 40px;
+            transition: transform 0.2s;
+            text-shadow: 0 0 20px #ff00ff;
         }
 
-        /* 結果表示 */
-        #result-display {
-            margin-top: 40px;
-            font-size: 2.5rem;
-            text-align: center;
-            min-height: 100px;
+        .shake { animation: shake 0.3s linear; }
+        @keyframes shake {
+            0% { transform: translate(5px, 5px); }
+            25% { transform: translate(-5px, -5px); }
+            50% { transform: translate(5px, -5px); }
+            75% { transform: translate(-5px, 5px); }
+            100% { transform: translate(0, 0); }
         }
-
-        /* 背景の装飾 */
-        .random-shape {
-            position: absolute;
-            z-index: -1;
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
     </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
-    <div class="name-banner">OWNER: takii</div>
-    <h1>JANKEN DEATHMATCH</h1>
+    <div class="status">LV.99 TAKII が現れた！</div>
+    
+    <div id="enemy">👾</div>
 
-    <div class="choices">
-        <button class="btn" onclick="play('✊')">✊</button>
-        <button class="btn" onclick="play('✌️')">✌️</button>
-        <button class="btn" onclick="play('🖐️')">🖐️</button>
-    </div>
-
-    <div id="result-display">
-        <p>選んでください...</p>
+    <div class="window">
+        <div id="text-box" class="message">コマンドを選択してください...</div>
+        <div class="commands">
+            <button class="cmd-btn" onclick="play('✊')">▶ ✊ グー</button>
+            <button class="cmd-btn" onclick="play('✌️')">▶ ✌️ チョキ</button>
+            <button class="cmd-btn" onclick="play('🖐️')">▶ 🖐️ パー</button>
+        </div>
     </div>
 
     <script>
         const hands = ['✊', '✌️', '🖐️'];
+        let audioCtx = null;
+
+        // 音の生成関数（レトロなピコピコ音）
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(freq, type, duration) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
 
         function play(playerHand) {
+            initAudio();
             const botHand = hands[Math.floor(Math.random() * hands.length)];
-            let result = "";
-
-            // 勝敗判定
-            if (playerHand === botHand) {
-                result = "DRAW (引き分け)";
-                triggerGlitch('#555');
-            } else if (
-                (playerHand === '✊' && botHand === '✌️') ||
-                (playerHand === '✌️' && botHand === '🖐️') ||
-                (playerHand === '🖐️' && botHand === '✊')
-            ) {
-                result = "YOU WIN!! (takiiが微笑んだ)";
-                triggerGlitch('#0f0');
-            } else {
-                result = "YOU LOSE... (takiiは悲しんだ)";
-                triggerGlitch('#f00');
-            }
-
-            document.getElementById('result-display').innerHTML = `
-                <div>自分: ${playerHand} vs 相手: ${botHand}</div>
-                <div style="font-size: 4rem; margin-top:10px;">${result}</div>
-            `;
+            const textBox = document.getElementById('text-box');
+            const enemy = document.getElementById('enemy');
             
-            spawnTakii();
-        }
+            // 選択音
+            playSound(440, 'square', 0.1);
 
-        // 背景をフラッシュさせる
-        function triggerGlitch(color) {
-            document.body.style.backgroundColor = color;
             setTimeout(() => {
-                document.body.style.backgroundColor = '#000';
-            }, 100);
-            
-            // ランダムな色に一瞬変える
-            const randomColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            document.querySelector('h1').style.color = randomColor;
-        }
-
-        // 画面のあちこちに "takii" を出現させる
-        function spawnTakii() {
-            const div = document.createElement('div');
-            div.className = 'random-shape';
-            div.innerText = 'takii';
-            div.style.left = Math.random() * 90 + 'vw';
-            div.style.top = Math.random() * 90 + 'vh';
-            div.style.fontSize = (Math.random() * 5 + 2) + 'rem';
-            div.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            div.style.transform = `rotate(${Math.random() * 360}deg)`;
-            
-            document.body.appendChild(div);
-            
-            // 2秒後に消す
-            setTimeout(() => div.remove(), 2000);
+                if (playerHand === botHand) {
+                    textBox.innerText = `たきいは ${botHand} を出した！\n引き分けだ。空間が歪む。`;
+                    playSound(200, 'sine', 0.3);
+                } else if (
+                    (playerHand === '✊' && botHand === '✌️') ||
+                    (playerHand === '✌️' && botHand === '🖐️') ||
+                    (playerHand === '🖐️' && botHand === '✊')
+                ) {
+                    textBox.innerHTML = `<span style="color:#f0f">たきいにダメージを与えた！</span>\n勝利のメロディが響く。`;
+                    enemy.classList.add('shake');
+                    setTimeout(() => enemy.classList.remove('shake'), 300);
+                    // 勝利音（アルペジオ）
+                    playSound(523, 'square', 0.1);
+                    setTimeout(() => playSound(659, 'square', 0.1), 100);
+                    setTimeout(() => playSound(783, 'square', 0.3), 200);
+                } else {
+                    textBox.innerHTML = `<span style="color:#f00">たきいの攻撃！</span>\nあなたは致命的な個性を浴びた。`;
+                    document.body.style.backgroundColor = '#400';
+                    setTimeout(() => document.body.style.backgroundColor = '#000', 100);
+                    // 敗北音
+                    playSound(150, 'sawtooth', 0.5);
+                }
+            }, 300);
         }
     </script>
 </body>
