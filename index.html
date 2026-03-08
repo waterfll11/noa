@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>TAKII QUEST - BATTLE</title>
+    <title>TYPING QUEST - TAKII'S REVENGE</title>
     <style>
         body {
             background-color: #000;
@@ -15,86 +15,168 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
-            border: 10px double #555;
+            border: 10px double #ff00ff;
             box-sizing: border-box;
-            transition: background 0.2s;
         }
 
-        /* ゲージのデザイン */
-        .ui-container {
-            width: 80%;
-            max-width: 600px;
+        /* 画面上部情報 */
+        .info-panel {
+            width: 90%;
+            max-width: 700px;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .hp-bar-outer {
-            width: 150px;
-            height: 20px;
-            border: 2px solid #fff;
-            background: #222;
-        }
-        .hp-bar-inner {
-            height: 100%;
-            background: #0f0;
-            width: 100%;
-            transition: width 0.3s;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #0ff;
         }
 
-        /* 敵の見た目 */
-        #enemy-container {
+        #timer-bar-outer {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            margin-bottom: 20px;
+        }
+        #timer-bar-inner {
+            height: 100%;
+            background: #ff0;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        /* 敵エリア */
+        #enemy-area {
             text-align: center;
-            height: 200px;
+            height: 220px;
+            margin-bottom: 20px;
         }
         #enemy-sprite {
-            font-size: 6rem;
-            margin-top: 20px;
+            font-size: 8rem;
             display: inline-block;
+            filter: drop-shadow(0 0 15px #f0f);
+        }
+        #enemy-hp {
+            font-size: 1.5rem;
+            color: #f00;
+            font-weight: bold;
         }
 
-        /* ウィンドウ */
+        /* タイピングエリア */
         .window {
             border: 4px solid #fff;
             padding: 20px;
-            background: #000;
-            width: 80%;
+            background: #111;
+            width: 90%;
             max-width: 600px;
-            box-shadow: 0 0 0 4px #000, 0 0 0 8px #fff;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
-        .message { height: 60px; font-size: 1.1rem; margin-bottom: 10px; }
-        .commands { display: flex; gap: 10px; }
-        .cmd-btn {
-            background: #000; color: #fff; border: 2px solid #fff;
-            padding: 10px; flex: 1; cursor: pointer; font-family: inherit;
-        }
-        .cmd-btn:hover { background: #fff; color: #000; }
-        .cmd-btn:disabled { border-color: #444; color: #444; cursor: not-allowed; }
 
-        /* アニメーション */
+        .question-label { color: #aaa; font-size: 0.9rem; margin-bottom: 5px; }
+        .japanese-word { font-size: 2rem; color: #fff; margin-bottom: 15px; text-shadow: 2px 2px #555; }
+        
+        #type-input {
+            background: #000;
+            color: #0f0;
+            border: 2px solid #0f0;
+            font-size: 2rem;
+            width: 80%;
+            text-align: center;
+            padding: 10px;
+            outline: none;
+            text-transform: lowercase;
+        }
+
+        .enter-hint {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #f0f;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
         .shake { animation: shake 0.3s; }
         @keyframes shake {
-            0% { transform: translate(5px, 0); }
-            50% { transform: translate(-5px, 0); }
-            100% { transform: translate(0, 0); }
+            0%, 100% { transform: translate(0,0); }
+            20% { transform: translate(-10px, 5px); }
+            60% { transform: translate(10px, -5px); }
         }
     </style>
 </head>
 <body onclick="initAudio()">
 
-    <div class="ui-container">
-        <div>
-            <div>PLAYER (takii好き)</div>
-            <div class="hp-bar-outer"><div id="player-hp" class="hp-bar-inner"></div></div>
-        </div>
-        <div style="text-align: right;">
-            <div id="enemy-name">TAKII 1号</div>
-            <div class="hp-bar-outer"><div id="enemy-hp" class="hp-bar-inner"></div></div>
-        </div>
-    </div>
-    
-    <div id="enemy-container">
-        <div id="enemy-sprite">👾</div>
+    <div class="info-panel">
+        <div>ROUND: <span id="round-num">1</span>/5</div>
+        <div>LIFE: <span id="life-num" style="color:red">❤❤❤❤</span></div>
     </div>
 
-    <div class="window">
-        <div id="text-box" class="message">takiiの化身たちが道を塞いでいる！<br>コマンドを入力せよ。</div>
+    <div id="timer-bar-outer"><div id="timer-bar-inner"></div></div>
+
+    <div id="enemy-area">
+        <div id="enemy-name" style="font-size:1.2rem; color:#f0f;">TAKII'S SLIME</div>
+        <div id="enemy-sprite">👾</div>
+        <div id="enemy-hp">REMAIN: 5</div>
+    </div>
+
+    <div class="window" id="game-window">
+        <div class="question-label">【英語に変換してタイピングせよ】</div>
+        <div id="q-ja" class="japanese-word">読み込み中...</div>
+        <input type="text" id="type-input" autocomplete="off" placeholder="TYPE HERE">
+        <div class="enter-hint">Hit ENTER Key to Attack!</div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let round = 1;
+        let life = 4;
+        let enemyHits = 5;
+        let timeLeft = 100;
+        let timerId = null;
+        let currentWord = {};
+
+        const wordList = [
+            { ja: "冒険", en: "adventure" }, { ja: "想像力", en: "imagination" },
+            { ja: "美しい", en: "beautiful" }, { ja: "宇宙", en: "universe" },
+            { ja: "経験", en: "experience" }, { ja: "挑戦", en: "challenge" },
+            { ja: "素晴らしい", en: "wonderful" }, { ja: "知識", en: "knowledge" },
+            { ja: "可能性", en: "possibility" }, { ja: "勝利", en: "victory" },
+            { ja: "不思議", en: "mystery" }, { ja: "未来", en: "future" },
+            { ja: "爆発", en: "explosion" }, { ja: "革命", en: "revolution" }
+        ];
+
+        const enemies = [
+            { name: "takiiのスライム", sprite: "👾", time: 10 },
+            { name: "takiiの門番", sprite: "🛡️", time: 8 },
+            { name: "takiiの亡霊", sprite: "👻", time: 7 },
+            { name: "takiiの巨竜", sprite: "🐉", time: 6 },
+            { name: "真・魔王TAKII", sprite: "👑", time: 5 } // 最終ラウンド
+        ];
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(f, t, d) {
+            if (!audioCtx) return;
+            let o = audioCtx.createOscillator();
+            let g = audioCtx.createGain();
+            o.type = t; o.frequency.value = f;
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + d);
+        }
+
+        function nextQuestion() {
+            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+            document.getElementById('q-ja').innerText = currentWord.ja;
+            document.getElementById('type-input').value = "";
+            document.getElementById('type-input').focus();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerId);
+            timeLeft = 100;
+            const step = 100 / (enemies[round-1].time * 10);
+            timerId = setInterval(() => {
+                timeLeft
