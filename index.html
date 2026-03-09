@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>TYPING QUEST - TAKII'S REVENGE</title>
+    <title>TYPING QUEST - TAKII</title>
     <style>
         body {
             background-color: #000;
@@ -14,90 +14,63 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
-            border: 10px double #ff00ff;
+            border: 8px double #ff00ff;
             box-sizing: border-box;
         }
 
-        .info-panel {
+        /* ステータス表示 */
+        #ui-layer {
             width: 90%;
-            max-width: 700px;
+            max-width: 600px;
             display: flex;
             justify-content: space-between;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: #0ff;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
         }
 
-        #timer-bar-outer {
+        /* 制限時間バー */
+        #timer-container {
             width: 80%;
-            max-width: 600px;
-            height: 15px;
-            background: #333;
-            margin-bottom: 20px;
+            max-width: 500px;
+            height: 20px;
+            background: #222;
             border: 2px solid #fff;
+            margin-bottom: 20px;
         }
-        #timer-bar-inner {
+        #timer-bar {
             height: 100%;
             background: #ff0;
             width: 100%;
         }
 
-        #enemy-area {
+        /* 敵表示エリア */
+        #enemy-visual {
             text-align: center;
-            height: 220px;
             margin-bottom: 20px;
         }
         #enemy-sprite {
-            font-size: 8rem;
-            display: inline-block;
-            filter: drop-shadow(0 0 15px #f0f);
-        }
-        #enemy-hp {
-            font-size: 1.5rem;
-            color: #f00;
-            font-weight: bold;
+            font-size: 6rem;
+            margin: 10px 0;
+            display: block;
         }
 
+        /* メインウィンドウ */
         .window {
             border: 4px solid #fff;
-            padding: 20px;
             background: #111;
+            padding: 30px;
             width: 90%;
-            max-width: 600px;
+            max-width: 500px;
             text-align: center;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
-        .japanese-word { font-size: 2.2rem; color: #0f0; margin-bottom: 5px; }
-        .english-hint { font-size: 1.2rem; color: #aaa; margin-bottom: 15px; letter-spacing: 2px; }
+        #q-ja { font-size: 2.5rem; color: #0f0; margin-bottom: 10px; }
+        #q-hint { font-size: 1.2rem; color: #888; margin-bottom: 20px; }
         
         #type-input {
             background: #000;
             color: #fff;
-            border: 3px solid #0ff;
+            border: 2px solid #0ff;
             font-size: 2rem;
-            width: 80%;
-            text-align: center;
-            padding: 10px;
-            outline: none;
-        }
-
-        .enter-hint {
-            margin-top: 15px;
-            font-size: 1rem;
-            color: #ff00ff;
-            font-weight: bold;
-        }
-
-        .shake { animation: shake 0.3s; }
-        @keyframes shake {
-            0%, 100% { transform: translate(0,0); }
-            20% { transform: translate(-10px, 5px); }
-            60% { transform: translate(10px, -5px); }
-        }
-    </style>
-</head>
-<body>
-
-    <div class
+            width: 90%;
+            text-align
