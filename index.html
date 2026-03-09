@@ -5,91 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>チンアナゴ成長タップゲーム</title>
     <style>
-        :root {
-            /* 海の色と砂の色 */
-            --ocean-blue: #0077be;
-            --sand-color: #e6be8a;
-            --eel-body: #ffffff; /* 白い体 */
-            --eel-spot: #333333; /* 黒い斑点 */
-        }
-
+        /* 全体のレイアウト */
         body {
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end; /* 下（砂地）を基準にする */
-            align-items: center;
             height: 100vh;
-            background: linear-gradient(to bottom, #005f99 0%, var(--ocean-blue) 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(#004e92, #000428); /* 深海グラデーション */
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* 砂地を下に配置 */
+            font-family: sans-serif;
             user-select: none;
         }
 
-        /* 右上のカウンター */
-        #counter-display {
+        /* 右上のカウンタ表示 */
+        #ui-layer {
             position: absolute;
             top: 20px;
-            right: 30px;
-            font-size: 1.5rem;
-            font-weight: bold;
+            right: 20px;
             color: white;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 25px;
-            border-radius: 30px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            backdrop-filter: blur(5px);
             z-index: 100;
         }
 
         /* 砂地 */
-        .seabed {
+        .sand {
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 100px;
-            background-color: var(--sand-color);
-            z-index: 10;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+            height: 120px;
+            background: #e3c48d;
+            z-index: 50;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
         }
 
-        /* 泡のエフェクト（背景） */
-        .bubble {
-            position: absolute;
-            bottom: -20px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            animation: rise 5s infinite ease-in;
-        }
-
-        @keyframes rise {
-            to { transform: translateY(-100vh); opacity: 0; }
-        }
-
-        /* チンアナゴのコンテナ */
-        #eel-container {
+        /* チンアナゴ本体 */
+        #eel-wrapper {
             position: relative;
-            z-index: 5;
-            cursor: pointer;
+            z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: transform 0.05s;
+            cursor: pointer;
         }
 
-        #eel-container:active {
-            transform: translateY(5px);
-        }
-
-        /* チンアナゴの体 */
         #eel-body {
-            width: 40px;
-            height: 100px; /* JSで可変 */
-            background-color: var(--eel-body);
-            border-radius: 20px 20px 0 0;
+            width: 40px; /* 基本の太さ */
+            height: 100px; /* 最初は小さい */
+            background-color: #ffffff; /* 白い体 */
+            border-radius: 25px 25px 0 0; /* 頭を丸く */
             position: relative;
-            transition: height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid #ddd;
+            transition: height 0.2s ease-out, width 0.5s ease;
+            border: 1px solid #ccc;
         }
 
         /* 目 */
@@ -98,7 +71,7 @@
             top: 15px;
             width: 6px;
             height: 6px;
-            background-color: #000;
+            background: #000;
             border-radius: 50%;
         }
         .eye.left { left: 8px; }
@@ -108,16 +81,103 @@
         .mouth {
             position: absolute;
             top: 25px;
-            left: 50%;
             width: 4px;
             height: 2px;
-            background-color: #ff9999;
+            background: #ffaaaa;
+            left: 50%;
             transform: translateX(-50%);
         }
 
-        /* 斑点（複数） */
+        /* 斑点模様 */
         .spot {
             position: absolute;
-            background-color: var(--eel-spot);
-            border-radius: 50%;
             width: 8px;
+            height: 8px;
+            background: #444;
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        /* 泡アニメーション */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: rise 4s forwards linear;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body onclick="growEel(event)">
+
+    <div id="ui-layer">TAPS: <span id="tap-count">0</span></div>
+
+    <div id="eel-wrapper">
+        <div id="eel-body">
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="mouth"></div>
+        </div>
+    </div>
+
+    <div class="sand"></div>
+
+    <script>
+        let count = 0;
+        const eel = document.getElementById('eel-body');
+        const countText = document.getElementById('tap-count');
+
+        // 斑点を体に追加する関数
+        function createSpots() {
+            for (let i = 0; i < 20; i++) {
+                const spot = document.createElement('div');
+                spot.className = 'spot';
+                spot.style.top = (Math.random() * 90) + '%';
+                spot.style.left = (Math.random() * 60 + 20) + '%';
+                eel.appendChild(spot);
+            }
+        }
+        createSpots();
+
+        function growEel(event) {
+            count++;
+            countText.innerText = count;
+
+            // 1タップごとに0.5mm(約2px相当)ずつ伸ばす
+            // 100, 200...ごとにさらに少し太くする
+            let baseHeight = 100;
+            let growth = count * 2; 
+            eel.style.height = (baseHeight + growth) + 'px';
+
+            // 100回ごとに太さを+5pxする
+            if (count % 100 === 0) {
+                let currentWidth = parseInt(window.getComputedStyle(eel).width);
+                eel.style.width = (currentWidth + 5) + 'px';
+            }
+
+            // タップした場所に泡を出す
+            createBubble(event.clientX, event.clientY);
+        }
+
+        function createBubble(x, y) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            const size = Math.random() * 15 + 5;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.left = x + 'px';
+            bubble.style.top = y + 'px';
+            document.body.appendChild(bubble);
+
+            setTimeout(() => {
+                bubble.remove();
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
