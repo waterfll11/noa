@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自己肯定感アップ・カード</title>
+    <title>自己肯定感アップ・カード（キーボード対応版）</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
@@ -29,6 +29,7 @@
             perspective: 1000px;
         }
 
+        /* キーボード操作のためにoutlineを追加 */
         .card {
             width: 120px;
             height: 180px;
@@ -43,6 +44,13 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
             transition: transform 0.3s, box-shadow 0.3s;
             user-select: none;
+            outline: none;
+        }
+
+        .card:focus {
+            transform: translateY(-15px);
+            box-shadow: 0 0 15px #764ba2;
+            border: 2px solid #fff;
         }
 
         .card:hover {
@@ -101,14 +109,14 @@
 <body>
 
     <h1>今日のあなたを肯定するカード</h1>
-    <p>5枚の中から、直感で1枚選んでください</p>
+    <p>Tabキーでカードを選び、Enterキーで決定してください</p>
 
     <div class="card-container" id="cardContainer">
-        <div class="card" onclick="selectCard(this)">?</div>
-        <div class="card" onclick="selectCard(this)">?</div>
-        <div class="card" onclick="selectCard(this)">?</div>
-        <div class="card" onclick="selectCard(this)">?</div>
-        <div class="card" onclick="selectCard(this)">?</div>
+        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
+        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
+        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
+        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
+        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
     </div>
 
     <div id="message-area"></div>
@@ -129,4 +137,72 @@
             "今日も一日、心臓を動かして偉い！", "あなたは可能性の塊です", "丁寧な暮らしを目指す心が美しい",
             "周りに流されず、自分を持っているね", "できないことがあっても、それは伸び代！", "あなたの「好き」は誰にも邪魔されない",
             "今日も安全に過ごせた、それだけで合格", "あなたは誰かの希望の光です", "自分を許せる心の広さがあるね",
-            "新しい発見をした自分を褒めよう", "努力の跡は
+            "新しい発見をした自分を褒めよう", "努力の跡は、あなたの中に残っている", "あなたはもっと幸せになっていい人",
+            "空を見上げた？その余裕が素晴らしい", "一歩ずつ、花を咲かせる準備ができてる", "あなたの丁寧な仕事は誰かが見ている",
+            "自分を大切にしようと思う心が花丸", "あなたは独りじゃない、繋がっているよ", "今日も素敵な一日にする力があなたにある",
+            "自分の心に素直になれたね", "明日の自分も、きっとあなたを応援してる"
+        ];
+
+        // --- キーボード操作用の追記 ---
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const activeElement = document.activeElement;
+                // フォーカスされている要素がカードであれば選択処理を実行
+                if (activeElement.classList.contains('card')) {
+                    selectCard(activeElement);
+                } else if (activeElement === document.getElementById('resetBtn')) {
+                    resetGame();
+                }
+            }
+        });
+        // ----------------------------
+
+        function selectCard(element) {
+            // 他のカードをクリック・フォーカス不可にする
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.setAttribute('tabindex', '-1'); // 選択後はフォーカス不可に
+            });
+            element.classList.add('selected');
+
+            const messageArea = document.getElementById('message-area');
+            messageArea.innerHTML = '<span class="loading-text">今日のあなたは...</span>';
+
+            let seconds = 5;
+            const timer = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    showResult();
+                }
+            }, 1000);
+        }
+
+        function showResult() {
+            const messageArea = document.getElementById('message-area');
+            const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+            
+            messageArea.innerHTML = `<div class="result-text">✨ ${randomPhrase} ✨</div>`;
+            const resetBtn = document.getElementById('resetBtn');
+            resetBtn.style.display = 'block';
+            resetBtn.focus(); // 結果が出たらリセットボタンにフォーカスを移動
+        }
+
+        function resetGame() {
+            const messageArea = document.getElementById('message-area');
+            const cards = document.querySelectorAll('.card');
+            const resetBtn = document.getElementById('resetBtn');
+
+            messageArea.innerHTML = '';
+            resetBtn.style.display = 'none';
+            cards.forEach(c => {
+                c.classList.remove('selected');
+                c.style.pointerEvents = 'auto';
+                c.setAttribute('tabindex', '0'); // 再びフォーカス可能に
+            });
+            cards[0].focus(); // 最初のカードにフォーカスを戻す
+        }
+    </script>
+</body>
+</html>
