@@ -2,75 +2,131 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>TYPING QUEST - TAKII</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自己肯定感アップ・カード</title>
     <style>
         body {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            border: 8px double #ff00ff;
-            box-sizing: border-box;
+            color: #333;
         }
 
-        /* ステータス表示 */
-        #ui-layer {
-            width: 90%;
-            max-width: 600px;
+        h1 {
+            margin-bottom: 30px;
+            color: #5d5d5d;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .card-container {
             display: flex;
-            justify-content: space-between;
-            font-size: 1.5rem;
-            margin-bottom: 10px;
+            gap: 15px;
+            perspective: 1000px;
         }
 
-        /* 制限時間バー */
-        #timer-container {
-            width: 80%;
-            max-width: 500px;
-            height: 20px;
-            background: #222;
-            border: 2px solid #fff;
-            margin-bottom: 20px;
-        }
-        #timer-bar {
-            height: 100%;
-            background: #ff0;
-            width: 100%;
-        }
-
-        /* 敵表示エリア */
-        #enemy-visual {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #enemy-sprite {
-            font-size: 6rem;
-            margin: 10px 0;
-            display: block;
-        }
-
-        /* メインウィンドウ */
-        .window {
-            border: 4px solid #fff;
-            background: #111;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-        }
-
-        #q-ja { font-size: 2.5rem; color: #0f0; margin-bottom: 10px; }
-        #q-hint { font-size: 1.2rem; color: #888; margin-bottom: 20px; }
-        
-        #type-input {
-            background: #000;
-            color: #fff;
-            border: 2px solid #0ff;
+        .card {
+            width: 120px;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 2rem;
-            width: 90%;
-            text-align
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            user-select: none;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .card.selected {
+            animation: pulse 1s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #message-area {
+            margin-top: 50px;
+            height: 100px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 20px;
+            max-width: 80%;
+        }
+
+        .loading-text {
+            color: #764ba2;
+            font-style: italic;
+        }
+
+        .result-text {
+            color: #d63384;
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>今日のあなたを肯定するカード</h1>
+    <p>5枚の中から、直感で1枚選んでください</p>
+
+    <div class="card-container" id="cardContainer">
+        <div class="card" onclick="selectCard(this)">?</div>
+        <div class="card" onclick="selectCard(this)">?</div>
+        <div class="card" onclick="selectCard(this)">?</div>
+        <div class="card" onclick="selectCard(this)">?</div>
+        <div class="card" onclick="selectCard(this)">?</div>
+    </div>
+
+    <div id="message-area"></div>
+    <button id="resetBtn" onclick="resetGame()">もう一度引く</button>
+
+    <script>
+        const phrases = [
+            "生きているだけで100点満点！", "朝起きた自分を褒めてあげて", "あなたの笑顔は誰かを幸せにしている",
+            "今日は無理せず、自分を甘やかしてOK", "一歩進んだだけで素晴らしい前進です", "あなたの存在そのものがギフトです",
+            "失敗は成長の調味料にすぎないよ", "自分のペースを大切にできているね", "今日まで頑張ってきた自分に拍手！",
+            "あなたはあなたのままで完璧です", "優しい心を持っているところが素敵", "小さな幸せを見つける天才だね",
+            "自分に優しくできる強さを持っている", "声を出すだけで偉い！", "今日はよく休むという大仕事をしよう",
+            "あなたの感性は世界に一つだけの宝物", "誰かと比べなくて大丈夫、あなたは特別", "一日の終わりに自分をハグしよう",
+            "美味しいものを食べた？それだけで最高！", "あなたは愛される価値がある人です", "少しずつ、確実に良くなっているよ",
+            "勇気を出して今日を始めたね", "あなたの言葉は誰かの支えになっている", "自分を信じる力が育ってきているよ",
+            "昨日の自分より、確実に経験値アップ！", "深呼吸できた？それだけでリラックスの達人", "あなたのこだわりは素敵な個性",
+            "無理に笑わなくても、あなたは魅力的", "一休みすることも、立派な戦略だよ", "自分の好きを大切にできているね",
+            "今日も一日、心臓を動かして偉い！", "あなたは可能性の塊です", "丁寧な暮らしを目指す心が美しい",
+            "周りに流されず、自分を持っているね", "できないことがあっても、それは伸び代！", "あなたの「好き」は誰にも邪魔されない",
+            "今日も安全に過ごせた、それだけで合格", "あなたは誰かの希望の光です", "自分を許せる心の広さがあるね",
+            "新しい発見をした自分を褒めよう", "努力の跡は
