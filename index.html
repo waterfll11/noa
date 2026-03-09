@@ -3,206 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自己肯定感アップ・カード（キーボード対応版）</title>
+    <title>ネコ成長タップゲーム</title>
     <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --cat-color: #ffb366; /* 可愛い茶トラ風の色 */
+            --ear-color: #ff9933;
+            --eye-color: #333;
+        }
+
         body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
             margin: 0;
-            color: #333;
-        }
-
-        h1 {
-            margin-bottom: 30px;
-            color: #5d5d5d;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .card-container {
+            padding: 0;
             display: flex;
-            gap: 15px;
-            perspective: 1000px;
-        }
-
-        /* キーボード操作のためにoutlineを追加 */
-        .card {
-            width: 120px;
-            height: 180px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            color: white;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--bg-color);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
             user-select: none;
-            outline: none;
         }
 
-        .card:focus {
-            transform: translateY(-15px);
-            box-shadow: 0 0 15px #764ba2;
-            border: 2px solid #fff;
-        }
-
-        .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-        }
-
-        .card.selected {
-            animation: pulse 1s infinite ease-in-out;
-            pointer-events: none;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        #message-area {
-            margin-top: 50px;
-            height: 100px;
-            text-align: center;
-            font-size: 1.5rem;
+        /* 右上のカウンター */
+        #counter-display {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2rem;
             font-weight: bold;
-            padding: 20px;
-            max-width: 80%;
-        }
-
-        .loading-text {
-            color: #764ba2;
-            font-style: italic;
-        }
-
-        .result-text {
-            color: #d63384;
-            animation: fadeIn 1s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        button {
-            margin-top: 20px;
+            color: #555;
+            background: rgba(255, 255, 255, 0.7);
             padding: 10px 20px;
-            background-color: #764ba2;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            display: none;
+            border-radius: 50px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
+        /* ネコのコンテナ */
+        #game-container {
+            cursor: pointer;
+            transition: transform 0.1s ease-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container:active {
+            transform: scale(0.95);
+        }
+
+        /* CSSで作るネコ */
+        .cat {
+            position: relative;
+            background-color: var(--cat-color);
+            border-radius: 50%;
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+
+        /* 耳 */
+        .ear {
+            position: absolute;
+            top: -10%;
+            width: 30%;
+            height: 40%;
+            background-color: var(--ear-color);
+            border-radius: 50% 50% 0 0;
+            z-index: -1;
+        }
+        .ear.left { left: 10%; transform: rotate(-20deg); }
+        .ear.right { right: 10%; transform: rotate(20deg); }
+
+        /* 目 */
+        .eye {
+            position: absolute;
+            top: 35%;
+            width: 15%;
+            height: 15%;
+            background-color: var(--eye-color);
+            border-radius: 50%;
+        }
+        .eye.left { left: 25%; }
+        .eye.right { right: 25%; }
+
+        /* 鼻 */
+        .nose {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            width: 10%;
+            height: 8%;
+            background-color: #ff8080;
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* ひげ */
+        .whisker {
+            position: absolute;
+            width: 25%;
+            height: 2px;
+            background-color: #fff;
+            top: 60%;
+        }
+        .whisker.l1 { left: -15%; transform: rotate(10deg); }
+        .whisker.l2 { left: -15%; transform: rotate(-5deg); }
+        .whisker.r1 { right: -15%; transform: rotate(-10deg); }
+        .whisker.r2 { right: -15%; transform: rotate(5deg); }
+
     </style>
 </head>
 <body>
 
-    <h1>今日のあなたを肯定するカード</h1>
-    <p>Tabキーでカードを選び、Enterキーで決定してください</p>
+    <div id="counter-display">TAPS: <span id="count">0</span></div>
 
-    <div class="card-container" id="cardContainer">
-        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
-        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
-        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
-        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
-        <div class="card" tabindex="0" onclick="selectCard(this)">?</div>
+    <div id="game-container">
+        <div id="cat" class="cat">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="nose"></div>
+            <div class="whisker l1"></div>
+            <div class="whisker l2"></div>
+            <div class="whisker r1"></div>
+            <div class="whisker r2"></div>
+        </div>
     </div>
 
-    <div id="message-area"></div>
-    <button id="resetBtn" onclick="resetGame()">もう一度引く</button>
-
     <script>
-        const phrases = [
-            "生きているだけで100点満点！", "朝起きた自分を褒めてあげて", "あなたの笑顔は誰かを幸せにしている",
-            "今日は無理せず、自分を甘やかしてOK", "一歩進んだだけで素晴らしい前進です", "あなたの存在そのものがギフトです",
-            "失敗は成長の調味料にすぎないよ", "自分のペースを大切にできているね", "今日まで頑張ってきた自分に拍手！",
-            "あなたはあなたのままで完璧です", "優しい心を持っているところが素敵", "小さな幸せを見つける天才だね",
-            "自分に優しくできる強さを持っている", "声を出すだけで偉い！", "今日はよく休むという大仕事をしよう",
-            "あなたの感性は世界に一つだけの宝物", "誰かと比べなくて大丈夫、あなたは特別", "一日の終わりに自分をハグしよう",
-            "美味しいものを食べた？それだけで最高！", "あなたは愛される価値がある人です", "少しずつ、確実に良くなっているよ",
-            "勇気を出して今日を始めたね", "あなたの言葉は誰かの支えになっている", "自分を信じる力が育ってきているよ",
-            "昨日の自分より、確実に経験値アップ！", "深呼吸できた？それだけでリラックスの達人", "あなたのこだわりは素敵な個性",
-            "無理に笑わなくても、あなたは魅力的", "一休みすることも、立派な戦略だよ", "自分の好きを大切にできているね",
-            "今日も一日、心臓を動かして偉い！", "あなたは可能性の塊です", "丁寧な暮らしを目指す心が美しい",
-            "周りに流されず、自分を持っているね", "できないことがあっても、それは伸び代！", "あなたの「好き」は誰にも邪魔されない",
-            "今日も安全に過ごせた、それだけで合格", "あなたは誰かの希望の光です", "自分を許せる心の広さがあるね",
-            "新しい発見をした自分を褒めよう", "努力の跡は、あなたの中に残っている", "あなたはもっと幸せになっていい人",
-            "空を見上げた？その余裕が素晴らしい", "一歩ずつ、花を咲かせる準備ができてる", "あなたの丁寧な仕事は誰かが見ている",
-            "自分を大切にしようと思う心が花丸", "あなたは独りじゃない、繋がっているよ", "今日も素敵な一日にする力があなたにある",
-            "自分の心に素直になれたね", "明日の自分も、きっとあなたを応援してる"
-        ];
+        let tapCount = 0;
+        const catElement = document.getElementById('cat');
+        const countDisplay = document.getElementById('count');
 
-        // --- キーボード操作用の追記 ---
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                const activeElement = document.activeElement;
-                // フォーカスされている要素がカードであれば選択処理を実行
-                if (activeElement.classList.contains('card')) {
-                    selectCard(activeElement);
-                } else if (activeElement === document.getElementById('resetBtn')) {
-                    resetGame();
-                }
+        // 初期サイズ
+        let baseSize = 100;
+
+        function updateCatSize() {
+            // 1タップごとに0.5pxずつ大きくし、
+            // 100, 200...と大台に乗る際の変化を実感しやすくします
+            const newSize = baseSize + (tapCount * 0.5);
+            catElement.style.width = newSize + 'px';
+            catElement.style.height = (newSize * 0.85) + 'px'; // 少し横長の可愛い形
+        }
+
+        // 初期化
+        updateCatSize();
+
+        document.body.addEventListener('click', () => {
+            tapCount++;
+            countDisplay.innerText = tapCount;
+
+            // サイズ更新
+            updateCatSize();
+
+            // 100回ごとのボーナスエフェクト（少し強調）
+            if (tapCount % 100 === 0) {
+                catElement.style.filter = 'brightness(1.2)';
+                setTimeout(() => {
+                    catElement.style.filter = 'brightness(1.0)';
+                }, 200);
             }
         });
-        // ----------------------------
-
-        function selectCard(element) {
-            // 他のカードをクリック・フォーカス不可にする
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(c => {
-                c.style.pointerEvents = 'none';
-                c.setAttribute('tabindex', '-1'); // 選択後はフォーカス不可に
-            });
-            element.classList.add('selected');
-
-            const messageArea = document.getElementById('message-area');
-            messageArea.innerHTML = '<span class="loading-text">今日のあなたは...</span>';
-
-            let seconds = 5;
-            const timer = setInterval(() => {
-                seconds--;
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    showResult();
-                }
-            }, 1000);
-        }
-
-        function showResult() {
-            const messageArea = document.getElementById('message-area');
-            const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
-            
-            messageArea.innerHTML = `<div class="result-text">✨ ${randomPhrase} ✨</div>`;
-            const resetBtn = document.getElementById('resetBtn');
-            resetBtn.style.display = 'block';
-            resetBtn.focus(); // 結果が出たらリセットボタンにフォーカスを移動
-        }
-
-        function resetGame() {
-            const messageArea = document.getElementById('message-area');
-            const cards = document.querySelectorAll('.card');
-            const resetBtn = document.getElementById('resetBtn');
-
-            messageArea.innerHTML = '';
-            resetBtn.style.display = 'none';
-            cards.forEach(c => {
-                c.classList.remove('selected');
-                c.style.pointerEvents = 'auto';
-                c.setAttribute('tabindex', '0'); // 再びフォーカス可能に
-            });
-            cards[0].focus(); // 最初のカードにフォーカスを戻す
-        }
     </script>
 </body>
 </html>
