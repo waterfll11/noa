@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ネコ成長タップゲーム</title>
+    <title>チンアナゴ成長タップゲーム</title>
     <style>
         :root {
-            --bg-color: #f0f8ff;
-            --cat-color: #ffb366; /* 可愛い茶トラ風の色 */
-            --ear-color: #ff9933;
-            --eye-color: #333;
+            /* 海の色と砂の色 */
+            --ocean-blue: #0077be;
+            --sand-color: #e6be8a;
+            --eel-body: #ffffff; /* 白い体 */
+            --eel-spot: #333333; /* 黒い斑点 */
         }
 
         body {
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-end; /* 下（砂地）を基準にする */
             align-items: center;
             height: 100vh;
-            background-color: var(--bg-color);
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to bottom, #005f99 0%, var(--ocean-blue) 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             user-select: none;
         }
@@ -30,140 +32,92 @@
             position: absolute;
             top: 20px;
             right: 30px;
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
-            color: #555;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 10px 20px;
-            border-radius: 50px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: white;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 25px;
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            z-index: 100;
         }
 
-        /* ネコのコンテナ */
-        #game-container {
-            cursor: pointer;
-            transition: transform 0.1s ease-out;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #game-container:active {
-            transform: scale(0.95);
-        }
-
-        /* CSSで作るネコ */
-        .cat {
-            position: relative;
-            background-color: var(--cat-color);
-            border-radius: 50%;
-            transition: width 0.3s ease, height 0.3s ease;
-        }
-
-        /* 耳 */
-        .ear {
+        /* 砂地 */
+        .seabed {
             position: absolute;
-            top: -10%;
-            width: 30%;
-            height: 40%;
-            background-color: var(--ear-color);
-            border-radius: 50% 50% 0 0;
-            z-index: -1;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background-color: var(--sand-color);
+            z-index: 10;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
         }
-        .ear.left { left: 10%; transform: rotate(-20deg); }
-        .ear.right { right: 10%; transform: rotate(20deg); }
+
+        /* 泡のエフェクト（背景） */
+        .bubble {
+            position: absolute;
+            bottom: -20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: rise 5s infinite ease-in;
+        }
+
+        @keyframes rise {
+            to { transform: translateY(-100vh); opacity: 0; }
+        }
+
+        /* チンアナゴのコンテナ */
+        #eel-container {
+            position: relative;
+            z-index: 5;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.05s;
+        }
+
+        #eel-container:active {
+            transform: translateY(5px);
+        }
+
+        /* チンアナゴの体 */
+        #eel-body {
+            width: 40px;
+            height: 100px; /* JSで可変 */
+            background-color: var(--eel-body);
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            transition: height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid #ddd;
+        }
 
         /* 目 */
         .eye {
             position: absolute;
-            top: 35%;
-            width: 15%;
-            height: 15%;
-            background-color: var(--eye-color);
+            top: 15px;
+            width: 6px;
+            height: 6px;
+            background-color: #000;
             border-radius: 50%;
         }
-        .eye.left { left: 25%; }
-        .eye.right { right: 25%; }
+        .eye.left { left: 8px; }
+        .eye.right { right: 8px; }
 
-        /* 鼻 */
-        .nose {
+        /* 口 */
+        .mouth {
             position: absolute;
-            top: 55%;
+            top: 25px;
             left: 50%;
-            width: 10%;
-            height: 8%;
-            background-color: #ff8080;
-            border-radius: 50%;
+            width: 4px;
+            height: 2px;
+            background-color: #ff9999;
             transform: translateX(-50%);
         }
 
-        /* ひげ */
-        .whisker {
+        /* 斑点（複数） */
+        .spot {
             position: absolute;
-            width: 25%;
-            height: 2px;
-            background-color: #fff;
-            top: 60%;
-        }
-        .whisker.l1 { left: -15%; transform: rotate(10deg); }
-        .whisker.l2 { left: -15%; transform: rotate(-5deg); }
-        .whisker.r1 { right: -15%; transform: rotate(-10deg); }
-        .whisker.r2 { right: -15%; transform: rotate(5deg); }
-
-    </style>
-</head>
-<body>
-
-    <div id="counter-display">TAPS: <span id="count">0</span></div>
-
-    <div id="game-container">
-        <div id="cat" class="cat">
-            <div class="ear left"></div>
-            <div class="ear right"></div>
-            <div class="eye left"></div>
-            <div class="eye right"></div>
-            <div class="nose"></div>
-            <div class="whisker l1"></div>
-            <div class="whisker l2"></div>
-            <div class="whisker r1"></div>
-            <div class="whisker r2"></div>
-        </div>
-    </div>
-
-    <script>
-        let tapCount = 0;
-        const catElement = document.getElementById('cat');
-        const countDisplay = document.getElementById('count');
-
-        // 初期サイズ
-        let baseSize = 100;
-
-        function updateCatSize() {
-            // 1タップごとに0.5pxずつ大きくし、
-            // 100, 200...と大台に乗る際の変化を実感しやすくします
-            const newSize = baseSize + (tapCount * 0.5);
-            catElement.style.width = newSize + 'px';
-            catElement.style.height = (newSize * 0.85) + 'px'; // 少し横長の可愛い形
-        }
-
-        // 初期化
-        updateCatSize();
-
-        document.body.addEventListener('click', () => {
-            tapCount++;
-            countDisplay.innerText = tapCount;
-
-            // サイズ更新
-            updateCatSize();
-
-            // 100回ごとのボーナスエフェクト（少し強調）
-            if (tapCount % 100 === 0) {
-                catElement.style.filter = 'brightness(1.2)';
-                setTimeout(() => {
-                    catElement.style.filter = 'brightness(1.0)';
-                }, 200);
-            }
-        });
-    </script>
-</body>
-</html>
+            background-color: var(--eel-spot);
+            border-radius: 50%;
+            width: 8px;
